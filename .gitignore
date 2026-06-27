@@ -1,0 +1,6 @@
+# macOSの隠しファイル
+.DS_Store
+
+# Xcodeのユーザー状態ファイル
+*.xcuserstate
+xcuserdata/
