@@ -29,7 +29,7 @@ struct CentralView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("加速度（受信値）")
+                Text("加速度（受信値）・合成加速度 (Norm)")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 AccelerationDisplay(acceleration: central.acceleration)
