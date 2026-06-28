@@ -24,6 +24,8 @@ class CentralManager: NSObject, ObservableObject {
     @Published var acceleration: AccelerationData = .zero
     @Published var connectedDeviceName: String = "-"
     @Published var isBluetoothReady: Bool = false
+    @Published var filteredNorm: Double = 1.0
+    @Published var stepCount: Int = 0
 
     let csvExporter = CSVExporter()
 
@@ -32,6 +34,15 @@ class CentralManager: NSObject, ObservableObject {
     private var accelerometerCharacteristic: CBCharacteristic?
     private var pendingScan = false
     private var cancellables = Set<AnyCancellable>()
+
+    // EMA フィルタ
+    private var emaValue: Double = 1.0
+    private let emaAlpha: Double = 0.2
+
+    // 歩数カウント
+    private var lastStepTime: Date = .distantPast
+    private let stepThreshold: Double = 0.1
+    private let stepDeadTime: TimeInterval = 0.3
 
     override init() {
         super.init()
@@ -50,6 +61,10 @@ class CentralManager: NSObject, ObservableObject {
             return
         }
         pendingScan = false
+        stepCount = 0
+        emaValue = 1.0
+        filteredNorm = 1.0
+        lastStepTime = .distantPast
         connectionState = .scanning
         // serviceUUIDを指定することで、そのサービスをアドバタイズしている端末のみを発見
         centralManager.scanForPeripherals(withServices: [BLEConstants.serviceUUID], options: nil)
@@ -143,9 +158,22 @@ extension CentralManager: CBPeripheralDelegate {
         guard characteristic.uuid == BLEConstants.accelerometerCharacteristicUUID,
               let data = characteristic.value,
               let accel = AccelerationData.fromData(data) else { return }
+        // EMA フィルタ（バックグラウンドスレッドで計算してからMainに反映）
+        let norm = accel.norm
+        let newEma = self.emaAlpha * norm + (1 - self.emaAlpha) * self.emaValue
+        self.emaValue = newEma
+
+        let movement = newEma - 1.0
+        let now = Date()
+        let shouldCount = movement > self.stepThreshold
+            && now.timeIntervalSince(self.lastStepTime) > self.stepDeadTime
+        if shouldCount { self.lastStepTime = now }
+
         // CoreBluetoothのコールバックはバックグラウンドスレッドの可能性があるため明示的にMain切替
         DispatchQueue.main.async {
             self.acceleration = accel
+            self.filteredNorm = newEma
+            if shouldCount { self.stepCount += 1 }
             self.csvExporter.append(accel)
         }
     }

@@ -35,6 +35,26 @@ struct CentralView: View {
                 AccelerationDisplay(acceleration: central.acceleration)
             }
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text("合成加速度 Norm（EMAフィルタ後）")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text(String(format: "%.4f g", central.filteredNorm))
+                    .font(.system(.body, design: .monospaced))
+                    .padding(.bottom, 4)
+
+                Text("歩数")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text("\(central.stepCount) 歩")
+                    .font(.title2)
+                    .bold()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .background(Color(.systemGray6))
+            .cornerRadius(14)
+
             Spacer()
 
             actionButton

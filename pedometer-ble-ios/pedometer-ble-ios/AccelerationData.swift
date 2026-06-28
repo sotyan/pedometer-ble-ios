@@ -26,5 +26,8 @@ struct AccelerationData{
         let z = data.withUnsafeBytes{ $0.load(fromByteOffset: 8, as: Float.self)}
         return AccelerationData(x: x, y: y, z: z)
     }
-    
+
+    var norm: Double {
+        sqrt(Double(x * x + y * y + z * z))
+    }
 }
