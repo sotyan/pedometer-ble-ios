@@ -11,7 +11,9 @@ struct AccelerationData{
     let x: Float
     let y: Float
     let z: Float
-    
+
+    var norm: Float { (x*x + y*y + z*z).squareRoot() }
+
     static let zero = AccelerationData(x:0, y:0, z:0)
     
     func toData() -> Data{

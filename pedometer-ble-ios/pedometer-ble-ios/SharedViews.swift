@@ -33,12 +33,14 @@ struct AccelerationDisplay: View{
             axisRow(label: "X", value: acceleration.x, color: .red)
             axisRow(label: "Y", value: acceleration.y, color: .green)
             axisRow(label: "Z", value: acceleration.z, color: .blue)
+            Divider()
+            normRow(value: acceleration.norm)
         }
         .padding(16)
         .background(Color(.systemGray6))
         .cornerRadius(14)
     }
-    
+
     private func axisRow(label: String, value: Float, color: Color) -> some View{
         HStack(spacing: 12){
             Text(label)
@@ -48,6 +50,20 @@ struct AccelerationDisplay: View{
             ProgressView(value: Double(min(max(value + 1, 0), 2) / 2))
                 .tint(color)
             Text(String(format: "% .4f g", value))
+                .font(.system(.body, design: .monospaced))
+                .frame(width: 96, alignment: .trailing)
+        }
+    }
+
+    private func normRow(value: Float) -> some View {
+        HStack(spacing: 12) {
+            Text("N")
+                .font(.headline)
+                .foregroundColor(.purple)
+                .frame(width: 18)
+            ProgressView(value: Double(min(value / 2, 1)))
+                .tint(.purple)
+            Text(String(format: "  %.4f g", value))
                 .font(.system(.body, design: .monospaced))
                 .frame(width: 96, alignment: .trailing)
         }
