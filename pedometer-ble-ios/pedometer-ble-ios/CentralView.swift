@@ -8,6 +8,8 @@ import SwiftUI
 
 struct CentralView: View {
     @StateObject private var central = CentralManager()
+    @State private var shareURL: URL?
+    @State private var showingShareSheet = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -18,6 +20,10 @@ struct CentralView: View {
                 Text("接続デバイス: \(central.connectedDeviceName)")
                     .font(.caption)
                     .foregroundColor(.secondary)
+            }
+
+            if central.csvExporter.isLogging {
+                StatusBadge(label: "記録中", isActive: true)
             }
 
             Divider()
@@ -36,6 +42,11 @@ struct CentralView: View {
         .padding()
         .navigationTitle("親機（Central）")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingShareSheet) {
+            if let url = shareURL {
+                ShareSheet(url: url)
+            }
+        }
     }
 
     @ViewBuilder
@@ -65,8 +76,35 @@ struct CentralView: View {
                     .foregroundColor(.secondary)
             }
         case .ready:
-            Button("切断") { central.disconnect() }
-                .foregroundColor(.red)
+            VStack(spacing: 12) {
+                if central.csvExporter.isLogging {
+                    Button("計測停止") {
+                        if let url = central.csvExporter.stopLogging() {
+                            shareURL = url
+                            showingShareSheet = true
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
+                } else {
+                    Button("計測開始") { central.csvExporter.startLogging() }
+                        .buttonStyle(.borderedProminent)
+                }
+                Button("切断") { central.disconnect() }
+                    .foregroundColor(.red)
+            }
         }
     }
+}
+
+// MARK: - ShareSheet
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

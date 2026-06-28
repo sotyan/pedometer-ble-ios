@@ -25,15 +25,22 @@ class CentralManager: NSObject, ObservableObject {
     @Published var connectedDeviceName: String = "-"
     @Published var isBluetoothReady: Bool = false
 
+    let csvExporter = CSVExporter()
+
     private var centralManager: CBCentralManager!
     private var connectedPeripheral: CBPeripheral?
     private var accelerometerCharacteristic: CBCharacteristic?
     private var pendingScan = false
+    private var cancellables = Set<AnyCancellable>()
 
     override init() {
         super.init()
         // queue: nil → メインキューを使用（UIへの反映が容易）
         centralManager = CBCentralManager(delegate: self, queue: nil)
+        // csvExporter の状態変化を CentralManager の objectWillChange に転送
+        csvExporter.objectWillChange
+            .sink { [weak self] in self?.objectWillChange.send() }
+            .store(in: &cancellables)
     }
 
     func startScanning() {
@@ -137,7 +144,10 @@ extension CentralManager: CBPeripheralDelegate {
               let data = characteristic.value,
               let accel = AccelerationData.fromData(data) else { return }
         // CoreBluetoothのコールバックはバックグラウンドスレッドの可能性があるため明示的にMain切替
-        DispatchQueue.main.async { self.acceleration = accel }
+        DispatchQueue.main.async {
+            self.acceleration = accel
+            self.csvExporter.append(accel)
+        }
     }
 
     func peripheral(_ peripheral: CBPeripheral,
