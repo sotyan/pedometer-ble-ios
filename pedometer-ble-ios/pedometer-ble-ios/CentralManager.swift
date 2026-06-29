@@ -37,12 +37,12 @@ class CentralManager: NSObject, ObservableObject {
 
     // EMA フィルタ
     private var emaValue: Double = 1.0
-    private let emaAlpha: Double = 0.2
+    private let emaAlpha: Double = 0.28
 
     // 歩数カウント
     private var lastStepTime: Date = .distantPast
     private let stepThreshold: Double = 0.1
-    private let stepDeadTime: TimeInterval = 0.3
+    private let stepDeadTime: TimeInterval = 0.35
 
     override init() {
         super.init()
